@@ -1,0 +1,638 @@
+\documentclass{article}
+
+\usepackage{iclr2027_conference,times}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs,microtype,url,xcolor}
+\usepackage[colorlinks=true,allcolors=blue]{hyperref}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\E}{\mathbb E}
+\newcommand{\Prb}{\mathbb P}
+\newcommand{\R}{\mathbb R}
+\newcommand{\1}{\mathbf 1}
+\newcommand{\cA}{\mathcal A}
+\newcommand{\cQ}{\mathcal Q}
+\newcommand{\TV}{\operatorname{TV}}
+\newcommand{\KL}{\operatorname{KL}}
+\newcommand{\Ber}{\operatorname{Ber}}
+\newcommand{\dist}{\operatorname{dist}}
+
+\title{The Boundary Complexity of One-Bit Mean Estimation}
+\author{\textbf{Pahan Dewasurendra} \\ Johns Hopkins University}
+
+\hypersetup{pdftitle={The Boundary Complexity of One-Bit Mean Estimation},pdfauthor={Pahan Dewasurendra},pdfkeywords={one-bit estimation, quantization, mean estimation, sample complexity, Fisher information, boundary complexity, distributed estimation, minimax rates},pdfsubject={preprint}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+One bit can encode an arbitrary measurable subset of the sample space, so communication alone does not describe the complexity of a binary quantizer. We study the missing geometric resource. Each of \(n\) Gaussian samples has mean \(\theta\in[-L,L]\) and known variance \(\sigma^2\). Before seeing data, a one-shot protocol fixes a binary query whose one-set is a union of at most \(q\) intervals. We prove the exact sample complexity
+\[
+n_q^\star(\varepsilon,\delta)
+\asymp
+\log\!\left(1+\frac{L}{\sigma}\right)
++
+\left(1\vee\frac{L}{q\sigma}\right)
+\frac{\sigma^2}{\varepsilon^2}\log\frac1\delta .
+\]
+The lower bound follows from a boundary-information inequality. A \(q\)-component bit has only \(O(q/\sigma)\) Fisher information after integration over the unknown mean. A continuous hard-center prior and product Hellinger affinity turn this global budget into the high-confidence factor \(L/(q\sigma)\). The argument also yields a conservation law for heterogeneous queries: achieving error \(\delta\) requires total effective boundary mass at least \(\Omega((\sigma^2/\varepsilon^2)\log(1/\delta))\).
+
+For the upper bound, every query draws a shifted grid and an independent threshold inside each of \(q\) cells. The union of the threshold suffixes is one bit with at most \(q\) components. Its Gaussian response functions form a random feature map whose squared metric is
+\[
+\Theta\!\left(\min\left\{\frac{|\theta-\theta'|^2}{h\sigma},
+\frac{|\theta-\theta'|}{h},1\right\}\right),
+\qquad h\asymp \sigma\vee\frac{L}{q}.
+\]
+A two-resolution least-squares decoder and one-dimensional peeling attain the lower bound without interaction or an extra resolution logarithm. Thus disconnected boundaries interpolate sharply between ordinary thresholds and unrestricted oscillatory one-bit queries.
+\end{abstract}
+
+\section{Introduction}
+
+A binary message is often treated as one unit of statistical information. That view hides a large difference between binary quantizers. A threshold asks whether \(X\geq t\). A general one-bit query asks whether \(X\in A\) for an arbitrary measurable set \(A\). Both transmit one bit, but the second set may oscillate across the real line and place a decision boundary near many possible parameter values at once.
+
+This distinction became concrete in one-bit mean estimation. Adaptive threshold protocols can first locate an unknown mean and then place later thresholds nearby. Nonadaptive threshold and interval queries pay a factor linear in the normalized range \(L/\sigma\) \citep{lau2026order}. In contrast, recent fully nonadaptive protocols with arbitrary measurable queries attain the adaptive rate \citep{miao2026universal,hu2026interaction}. Their refinement bits use periodic or signed-block sets with many disconnected pieces. The communication budget is unchanged, while the geometry of each bit is not.
+
+We quantify that geometry. Let \(X_i\sim N(\theta,\sigma^2)\), where \(\theta\in[-L,L]\). Before any sample is observed, query \(i\) fixes a set \(A_i\subseteq\R\), observes \(\1\{X_i\in A_i\}\), and sends that bit to a common decoder. Public randomness is allowed. We require each \(A_i\) to be a union of at most \(q\) intervals. This model interpolates from a threshold or interval at \(q=1\) to the component scale \(q\asymp L/\sigma\) needed to place boundaries throughout the plausible mean range.
+
+Our main result gives the complete interpolation. For \(\varepsilon\lesssim\sigma\) and constant-bounded \(\delta\),
+\[
+n_q^\star(\varepsilon,\delta;L,\sigma)
+\asymp
+\log(1+L/\sigma)
++
+\left(1\vee\frac{L}{q\sigma}\right)
+\frac{\sigma^2}{\varepsilon^2}\log\frac1\delta .
+\tag{1}
+\]
+The first term is the number of bits needed to localize one of \(L/\sigma\) noise-scale regions. The second is the usual Gaussian accuracy cost multiplied by the price of spreading at most \(q\) components across that range.
+
+The lower bound starts from an endpoint envelope implicit in \citet{kipnis2022mean}. If \(J_A(\theta)\) is the Fisher information in the bit \(\1\{X\in A\}\), then every union of \(q\) intervals satisfies
+\[
+\int_{\R}J_A(\theta)\,d\theta\leq C\frac q\sigma .
+\tag{2}
+\]
+This is global rather than pointwise. A threshold can be nearly optimal around its endpoint, but its information decays away from that endpoint. We choose a hard center uniformly over the range, reveal the center to the decoder, and ask it to distinguish the two means at center \(\pm2\varepsilon\). A Fisher--Rao path bound averages (2) into \(O(q\varepsilon^2/(L\sigma))\) squared Hellinger distance per bit. Product affinity preserves the logarithmic confidence dependence and yields the second term of (1). For nonuniform component caps \(q_i\), the same proof gives
+\[
+\sum_{i=1}^n\min\left\{1,\frac{q_i\sigma}{L}\right\}
+\gtrsim \frac{\sigma^2}{\varepsilon^2}\log\frac1\delta .
+\tag{3}
+\]
+Equation (3) is a boundary conservation law. In the unsaturated regime it fixes the total number of components required by any one-shot protocol.
+
+The matching protocol uses a random feature construction. Partition an expanded observation range into cells of width \(h\asymp L/q\), shift the partition uniformly, and draw one uniform threshold in every cell. The one-set is the union of the suffix of each cell after its threshold. Although the output remains binary, the \(q\) independently moving boundaries create response variation near every possible mean. For \(m_v(A)=\Pr_{N(v,\sigma^2)}(X\in A)\), we prove
+\[
+\E_A(m_u(A)-m_v(A))^2
+\asymp
+\begin{cases}
+|u-v|^2/(h\sigma),& |u-v|\leq\sigma,\\
+|u-v|/h,& \sigma<|u-v|\leq h,\\
+1,& |u-v|>h.
+\end{cases}
+\tag{4}
+\]
+The lower half of (4) is a variance decomposition over cell thresholds. The local upper half uses Poisson summation for a shifted quadrature error. A coarse least-squares fit localizes to \(O(h)\). A second fit over a fine net in that neighborhood reaches accuracy \(\varepsilon\). Both query batches are fixed in advance. The first output changes only the candidate set used to decode the second batch.
+
+There is substantial classical work on Fisher-optimal quantizer design. \citet{venkitasubramaniam2007quantization} numerically demonstrated that heterogeneous Gaussian thresholds can improve maximin asymptotic efficiency. \citet{kar2012optimal} studied an identical randomized binary quantizer under a maximin Cram\'er--Rao criterion. \citet{kipnis2022mean} proved asymptotic efficiency results and showed that a \(q\)-interval bit can attain exact pointwise optimality at only finitely many parameter values. These are direct precursors. They do not give a finite-sample rate in component count, range, accuracy, and confidence, or a matching bounded-component construction. The present result can be read as a nonasymptotic analytic resolution of the diversified-threshold phenomenon and its extension from one boundary to \(q\) disconnected components.
+
+\paragraph{Contributions.}
+\begin{enumerate}
+\item We determine the minimax one-shot sample complexity for every component budget \(q\), including the localization and high-confidence terms.
+\item We prove an integrated boundary-information inequality and a heterogeneous boundary conservation law.
+\item We construct a finite \(q\)-component random-grid query family with an exact three-regime response metric.
+\item We give a fully noninteractive two-resolution decoder whose analysis avoids an extra \(\log(L/\varepsilon)\) factor.
+\end{enumerate}
+
+\section{Model and results}
+
+For a measurable \(A\subseteq\R\), let \(\operatorname{comp}(A)\) be the least number of intervals, possibly unbounded, whose union is \(A\). Endpoints and empty intervals are immaterial under a Gaussian law. A public-coin one-shot protocol samples a seed \(W\), fixes \(A_1(W),\ldots,A_n(W)\) before observing data, and receives
+\[
+B_i=\1\{X_i\in A_i(W)\},\qquad X_i\stackrel{\mathrm{iid}}{\sim}N(\theta,\sigma^2).
+\]
+The decoder sees \(W\) and \(B_{1:n}\). There is no dependence of \(A_i\) on any sample or previous bit.
+
+\begin{definition}[Minimax sample complexity]
+Let \(n_q^\star(\varepsilon,\delta;L,\sigma)\) be the smallest \(n\) for which a public-coin one-shot protocol with \(\operatorname{comp}(A_i)\leq q\) has an estimator satisfying
+\[
+\sup_{\theta\in[-L,L]}\Prb_\theta(|\widehat\theta-\theta|>\varepsilon)\leq\delta.
+\]
+\end{definition}
+
+We state the theorem in the nondegenerate long-range regime. The omitted bounded-range and coarse-accuracy cases follow by changing universal constants.
+
+\begin{theorem}[Component frontier]\label{thm:main}
+There are universal constants \(c,C,c_0>0\) such that, for \(L\geq16\sigma\), \(0<\varepsilon\leq c_0\sigma\), \(0<\delta\leq1/4\), and every integer \(q\geq1\),
+\[
+c\left[
+\log\!\left(1+\frac L\sigma\right)
++
+\left(1\vee\frac{L}{q\sigma}\right)
+\frac{\sigma^2}{\varepsilon^2}\log\frac1\delta
+\right]
+\leq n_q^\star(\varepsilon,\delta;L,\sigma)
+\]
+\[
+\leq
+C\left[
+\log\!\left(1+\frac L\sigma\right)
++
+\left(1\vee\frac{L}{q\sigma}\right)
+\frac{\sigma^2}{\varepsilon^2}\log\frac1\delta
+\right].
+\tag{5}
+\]
+\end{theorem}
+
+Let \(R=L/\sigma\) and \(K=(\sigma^2/\varepsilon^2)\log(1/\delta)\). The unrestricted rate is \(\Theta(\log(1+R)+K)\). The accuracy term in (5) loses no geometric factor exactly when \(q\asymp R\). For the full rate, the necessary and sufficient scale is \(q\gtrsim RK/[\log(1+R)+K]\). In particular, the sharp high-resolution transition is \(q\asymp R\) whenever \(K\gtrsim\log(1+R)\).
+
+The lower proof gives more than a uniform cap.
+
+\begin{theorem}[Heterogeneous boundary budget]\label{thm:heterogeneous}
+Suppose query \(i\) has at most \(q_i\) components. Any one-shot protocol satisfying the guarantee in Definition 1 must obey
+\[
+\sum_{i=1}^n\min\left\{1,\frac{q_i\sigma}{L}\right\}
+\geq c\frac{\sigma^2}{\varepsilon^2}\log\frac1\delta .
+\tag{6}
+\]
+If every \(q_i\leq L/\sigma\), then its total component count \(Q=\sum_iq_i\) satisfies
+\[
+Q\geq c\frac{L}{\sigma}\frac{\sigma^2}{\varepsilon^2}\log\frac1\delta .
+\tag{7}
+\]
+\end{theorem}
+
+\section{Information lives near boundaries}
+
+Fix a deterministic query \(A\). Define
+\[
+p_A(\theta)=\Prb_\theta(X\in A),\qquad
+J_A(\theta)=\frac{p_A'(\theta)^2}{p_A(\theta)(1-p_A(\theta))}.
+\]
+This is the Fisher information about \(\theta\) in one Bernoulli response. The pointwise optimum over all binary quantizers is \(2/(\pi\sigma^2)\), attained by a threshold at the true mean \citep{barnes2018geometric}. A fixed query cannot maintain this information over a long range.
+
+\begin{lemma}[Integrated boundary information]\label{lem:integrated}
+If \(A\) is a union of at most \(q\) intervals, then
+\[
+\int_{\R}J_A(\theta)\,d\theta\leq C\frac q\sigma
+\tag{8}
+\]
+for a universal constant \(C\).
+\end{lemma}
+
+\paragraph{Proof idea.} Let \(E(A)\) be the at most \(2q\) finite endpoints. The endpoint envelope of \citet[Lemma 11]{kipnis2022mean}, specialized to a Gaussian, gives
+\[
+J_A(\theta)
+\leq\sum_{t\in E(A)}
+\frac{\phi_\sigma(t-\theta)^2}
+{\Phi((t-\theta)/\sigma)\Phi((\theta-t)/\sigma)}.
+\tag{9}
+\]
+Each summand is a translate of \(\sigma^{-2}\eta_1(\cdot/\sigma)\), where \(\eta_1\) is integrable. Integrating (9) proves (8). Appendix~\ref{app:information} also gives a self-contained proof through the categorical partition induced by the endpoints.
+
+To retain the confidence logarithm, we use Hellinger paths rather than only a van Trees inequality. Our convention is
+\[
+H^2(P,Q)=1-\int\sqrt{dP\,dQ}.
+\]
+
+\begin{lemma}[Fisher--Rao path]\label{lem:path}
+For the Bernoulli laws induced by query \(A\),
+\[
+H^2(P_a^A,P_b^A)\leq\frac{b-a}{8}\int_a^bJ_A(u)\,du.
+\tag{10}
+\]
+\end{lemma}
+
+The proof maps \(\Ber(p)\) to \((\sqrt p,\sqrt{1-p})\), whose squared speed is \(J_A/4\), then applies Cauchy--Schwarz.
+
+\begin{proof}[Proof of Theorems~\ref{thm:main} and \ref{thm:heterogeneous}, lower bounds]
+Choose \(C\) uniformly on \([-L+2\varepsilon,L-2\varepsilon]\), reveal \(C\) to the decoder, and choose \(V\) uniformly from \(\{-1,1\}\). Let \(\theta=C+2V\varepsilon\). Revealing \(C\) only makes the problem easier. An \(\varepsilon\)-accurate estimator determines \(V\) by thresholding at \(C\).
+
+For a fixed query \(A_i\), Lemma~\ref{lem:path} and Fubini give
+\[
+\E_C H^2(P_{C-2\varepsilon}^{A_i},P_{C+2\varepsilon}^{A_i})
+\leq C\frac{\varepsilon^2}{L}\int_\R J_{A_i}(u)\,du
+\leq C\frac{q_i\varepsilon^2}{L\sigma}.
+\tag{11}
+\]
+Data processing from the unquantized Gaussian pair also bounds (11) by \(C\varepsilon^2/\sigma^2\). Therefore its average is at most
+\[
+C\frac{\varepsilon^2}{\sigma^2}
+\min\left\{1,\frac{q_i\sigma}{L}\right\}.
+\tag{12}
+\]
+
+Condition on the public seed. The query plan is now deterministic. Hellinger affinity tensorizes over the independent bits. Each one-bit squared Hellinger distance is at most \(C\varepsilon^2/\sigma^2<1/2\), so
+\[
+\rho(P_-^{(n)},P_+^{(n)})
+=\prod_i(1-H_i^2)
+\geq \exp\left(-2\sum_iH_i^2\right).
+\]
+The equal-prior testing error is at least \(\rho^2/4\). Jensen's inequality over \(C\), (12), and Yao's principle show that the average error is at least
+\[
+\frac14\exp\left[
+-C\frac{\varepsilon^2}{\sigma^2}
+\sum_i\min\left\{1,\frac{q_i\sigma}{L}\right\}
+\right].
+\]
+Requiring this to be at most \(\delta\) proves (6), and (7) follows in the unsaturated regime. Taking \(q_i=q\) gives the accuracy term in (5).
+
+For localization, pack \([-L,L]\) at a sufficiently large constant multiple of \(\sigma\). The public seed is independent of the packing index and the transcript contains only \(n\) bits. Fano's inequality gives \(n\geq c\log(1+L/\sigma)\). The maximum of the localization and accuracy lower bounds is their sum up to a factor two.
+\end{proof}
+
+\section{A \(q\)-component random feature}
+
+We now construct the matching query distribution. Put
+\[
+q_0=q\wedge\lfloor L/\sigma\rfloor,\qquad
+M=\sqrt{16\log(2+L/\sigma)},\qquad
+B=L+M\sigma.
+\]
+When \(q_0\geq8\), set \(h=4B/q_0\). Draw \(S\sim\operatorname{Unif}[0,h)\) and partition the line into cells
+\[
+I_j=[S+jh,S+(j+1)h).
+\]
+For every cell intersecting \([-B,B]\), draw \(U_j\sim\operatorname{Unif}(I_j)\) independently. The query is
+\[
+A=\bigcup_j
+\left[\max\{U_j,-B\},\,
+\min\{S+(j+1)h,B\}\right).
+\tag{13}
+\]
+Empty intervals are removed. There are at most
+\[
+\frac{2B}{h}+2=\frac{q_0}{2}+2\leq q_0
+\]
+retained cells, so (13) has at most \(q\) components. When \(q_0<8\), set \(h=B\), draw \(U\sim\operatorname{Unif}[-B,B]\), and use the one-component query \(A=[U,B]\). In both cases, \(h\asymp L/q_0\) and \(h\geq4\sigma\).
+
+Given \(A\), define the Gaussian response
+\[
+m_v(A)=\Prb_{X\sim N(v,\sigma^2)}(X\in A)
+\]
+and the random-feature metric
+\[
+D(u,v)=\E_A(m_u(A)-m_v(A))^2.
+\]
+
+\begin{theorem}[Random-grid metric]\label{thm:metric}
+Uniformly for \(u,v\in[-L,L]\), with \(d=|u-v|\),
+\[
+c\psi_h(d)\leq D(u,v)\leq C\psi_h(d),
+\qquad
+\psi_h(d)=
+\begin{cases}
+d^2/(h\sigma),&d\leq\sigma,\\
+d/h,&\sigma<d\leq h,\\
+1,&d>h.
+\end{cases}
+\tag{14}
+\]
+\end{theorem}
+
+We give the main calculation. Assume \(u<v\) and define
+\[
+r_{u,v}(z)=
+\Phi((z-u)/\sigma)-\Phi((z-v)/\sigma)
+=(\1_{[u,v]}*\phi_\sigma)(z).
+\]
+Conditional on the shift, \(m_u-m_v\) is a sum of independent functions of the \(U_j\). Therefore
+\[
+\E[(m_u-m_v)^2\mid S]
+\geq \sum_j\operatorname{Var}_{U_j\sim\operatorname{Unif}(I_j)}r_{u,v}(U_j).
+\tag{15}
+\]
+On the infinite grid, the right side is
+\[
+\frac1h\int_\R r_{u,v}(z)^2\,dz
+-
+\frac1{h^2}\sum_j\left(\int_{I_j}r_{u,v}(z)\,dz\right)^2.
+\tag{16}
+\]
+For the grid construction, the convolution identity
+\[
+\int_\R r_{u,v}^2
+=\int_{-d}^d(d-|z|)\phi_{\sqrt2\sigma}(z)\,dz
+\asymp
+\begin{cases}
+d^2/\sigma,&d\leq\sigma,\\
+d,&d>\sigma
+\end{cases}
+\tag{17}
+\]
+and \(\sum_j(\int_{I_j}r)^2\leq(\int r)^2=d^2\) prove the lower bound until \(d\) is a small constant fraction of \(h\). At larger distances, averaging the pairwise variance identity over the random shift gives a direct lower bound from two rectangles straddling an endpoint. This yields \(D(u,v)\gtrsim\min\{d/h,1\}\). For \(q_0<8\), direct integration over the single threshold gives \(D(u,v)\asymp B^{-1}\int r_{u,v}^2\), up to the negligible truncation tail. Appendix~\ref{app:metric} gives the details.
+
+The local upper bound contains a useful second idea. Conditional variance is at most \(h^{-1}\int r^2\). The conditional mean is a randomly shifted quadrature error,
+\[
+g(S)=\sum_{j\in\mathbb Z}r_{u,v}(S+jh)-\frac1h\int_\R r_{u,v}.
+\]
+Poisson summation and Parseval give
+\[
+\E_Sg(S)^2=
+\frac1{h^2}\sum_{k\neq0}
+\left|\widehat r_{u,v}(2\pi k/h)\right|^2.
+\tag{18}
+\]
+Since
+\[
+|\widehat r_{u,v}(\omega)|
+\leq e^{-\sigma^2\omega^2/2}\min\{d,2/|\omega|\},
+\]
+the sum in (18) is \(O(d^2/(h\sigma))\) for \(d\leq\sigma\) and \(O(d/h)\) thereafter. Boundedness handles \(d>h\). Finally, the margin \(M\sigma\) makes the squared finite-range tail error \(O((d^2/\sigma^2)e^{-M^2})\), which is uniformly smaller than \(\psi_h(d)\). Appendix~\ref{app:metric} supplies all phase and tail details.
+
+\section{Decoding without interaction}
+
+For a candidate \(v\), query \(A\), and bit \(B\), use Brier loss
+\[
+\ell_v(A,B)=(B-m_v(A))^2.
+\]
+If the truth is \(u\), properness gives the exact excess risk
+\[
+\E_u[\ell_v-\ell_u]=D(u,v).
+\tag{19}
+\]
+Moreover, \(Y=\ell_v-\ell_u\) obeys \(|Y|\leq2|m_u-m_v|\) and \(\E Y^2\leq4D(u,v)\). Bernstein's inequality yields
+\[
+\Prb_u\left(\sum_{i=1}^n(\ell_v-\ell_u)\leq0\right)
+\leq e^{-cnD(u,v)}.
+\tag{20}
+\]
+
+The true \(u\) need not lie on a decoder net. If \(v_0\) is the nearest net point, compare \(\ell_v\) with \(\ell_{v_0}\). The square root of \(D\) is an \(L_2\) metric on response functions. The triangle inequality and the two sides of (14) imply that, after choosing the net constant small enough,
+\[
+D(u,v_0)\leq \frac1{16}D(u,v)
+\tag{21}
+\]
+for every candidate outside the target shell. The expected loss gap is then at least \(15D(u,v)/16\), while its second moment is \(O(D(u,v))\). Thus (20) remains valid up to constants with \(v_0\) in place of \(u\).
+
+Split the samples into two independent blocks, with every query in both blocks drawn before data are observed.
+
+\paragraph{Coarse block.} Minimize empirical Brier loss over a \(c_1h\)-net of \([-L,L]\). The nearest net point has population excess at most a small constant. Every point farther than \(C_1h\) has a fixed larger excess by (14). A union bound over \(O(L/h)\leq O(L/\sigma)\) candidates localizes the truth to \(C_1h\) with probability \(1-\delta/2\) once
+\[
+n_{\mathrm{coarse}}\geq C[\log(1+L/\sigma)+\log(1/\delta)].
+\tag{22}
+\]
+
+\paragraph{Fine block.} Minimize empirical Brier loss over a \(c_2\varepsilon\)-net in the \(O(h)\) neighborhood returned by the coarse block. A distance shell \(j\varepsilon\) contains only a constant number of net points. For \(j\varepsilon\leq\sigma\), its error exponent is at least \(cnj^2\varepsilon^2/(h\sigma)\). Beyond \(\sigma\), the exponent grows at least linearly until saturation. Summing the shells gives error at most \(\delta/2\) once
+\[
+n_{\mathrm{fine}}\geq
+C\frac{h\sigma}{\varepsilon^2}\log\frac1\delta.
+\tag{23}
+\]
+There is no \(\log(h/\varepsilon)\) term because the parameter is one-dimensional and the exponent grows across shells. Since
+\[
+h\sigma\asymp
+\sigma^2\left(1\vee\frac{L}{q\sigma}\right),
+\]
+equations (22) and (23) prove the upper bound in Theorem~\ref{thm:main}. The fine candidate restriction depends on coarse bits, but the fine queries do not. The protocol is fully noninteractive.
+
+\section{Context and implications}
+
+\paragraph{From thresholds to arbitrary bits.} Nonadaptive interval queries have a linear range penalty \citep{lau2026order}. Arbitrary measurable queries remove it \citep{miao2026universal,hu2026interaction}. Theorem~\ref{thm:main} identifies the resource between these endpoints. The relevant complexity is not the bit alphabet. It is the number of boundary layers a bit can place across the parameter range.
+
+\paragraph{Unrestricted one-bit estimation.} Generic one-bit and statistical-query estimators can replace polynomial range dependence by logarithmic moment dependence \citep{feldman2017range}. For distributed Gaussian means, \citet{cai2024distributed} established minimax communication rates and a localization--refinement construction under independent protocols. These works do not restrict the geometry of a bit's one-set. Recent Gaussian protocols make the unrestricted noninteractive endpoint especially sharp \citep{miao2026universal,hu2026interaction}.
+
+\paragraph{Asymptotic quantizer design.} Classical maximin Fisher-information work designed identical and heterogeneous scalar quantizers \citep{venkitasubramaniam2006minimax,venkitasubramaniam2007quantization,kar2012optimal}. In particular, \citet{venkitasubramaniam2007quantization} already showed numerically that distinct Gaussian thresholds improve over one identical threshold. Our \(q=1\) protocol is a randomized analytic design for that phenomenon. The new content is the nonasymptotic minimax rate, its confidence dependence, the component interpolation, and the matching lower budget.
+
+\paragraph{Public randomness matters.} Uniform dithering also appears in robust one-bit estimators \citep{abdalla2026robust}. If the decoder averages only the signs, its variance reflects the square of the range. Here the decoder knows every realized threshold and treats it as a regression covariate. This preserves the local Gaussian boundary layer and yields the sharper range-times-noise scale.
+
+\paragraph{Why disconnected sets help.} A \(q\)-component query multiplexes \(q\) local threshold experiments into one bit. The decoder cannot recover which boundary was crossed. It does not need to. The known random query makes the Bernoulli response probability vary with all \(q\) thresholds, and squared-loss regression aggregates that variation.
+
+\paragraph{Scope.} We focus on a known-variance Gaussian location family to isolate geometry without tail or scale adaptation. Endpoint envelopes extend to symmetric log-concave families under regularity conditions \citep{kipnis2022mean,kumar2026onebit}. Matching constructions beyond the Gaussian require two-sided control of the smoothed interval kernel. Higher-dimensional geometry is also open. Connected components are one-dimensional boundary counts, while the natural multivariate replacement may involve surface area, Gaussian perimeter, or a topological budget.
+
+\paragraph{Coarse observations.} A related model reveals the cell containing each sample under one fixed convex partition \citep{kalavasis2026coarse}. Such a cell label can carry more than one bit. Our observation is instead one binary answer to a public query that may change with the sample, and our resource is the number of connected components in that query's one-set.
+
+\section{Conclusion}
+
+One bit is not one geometric unit. In one-shot Gaussian mean estimation, every connected component contributes one localized boundary layer of information. Integrating those layers gives a lower budget, and randomly spreading them gives a matching protocol. The resulting frontier explains exactly when nonlocal one-bit queries can replace interaction and how much oscillation that replacement costs.
+
+\bibliography{references}
+\bibliographystyle{iclr2027_conference}
+
+\appendix
+
+\section{Proofs for boundary information}\label{app:information}
+
+\subsection{A self-contained categorical proof}
+
+We first record an alternative proof of Lemma~\ref{lem:integrated}. Sort the finite endpoints of \(A\) and let \(\{I_k\}_{k=1}^m\), with \(m\leq2q+1\), be the induced interval partition of \(\R\). Let \(Z\) be the interval index containing \(X\). Since \(\1_A(X)\) is a function of \(Z\), Fisher-information data processing gives
+\[
+J_A(\theta)\leq J_Z(\theta)
+=\sum_{k=1}^m\frac{p_k'(\theta)^2}{p_k(\theta)},
+\qquad p_k(\theta)=\Prb_\theta(X\in I_k).
+\tag{24}
+\]
+
+\begin{lemma}[Gaussian interval cell]\label{lem:cell}
+For every interval \(I\subseteq\R\), including a half-line,
+\[
+\int_\R\frac{p_I'(\theta)^2}{p_I(\theta)}\,d\theta\leq\frac C\sigma.
+\tag{25}
+\]
+\end{lemma}
+
+\begin{proof}
+Scale to \(\sigma=1\). For a finite interval of length \(\ell\leq1\), Cauchy--Schwarz under the Gaussian density gives
+\[
+\frac{p_I'(\theta)^2}{p_I(\theta)}
+\leq\int_I(x-\theta)^2\phi(x-\theta)\,dx.
+\]
+Integrating in \(\theta\) gives \(\ell\leq1\).
+
+For \(\ell\geq1\), translate \(I\) to \([0,\ell]\) and write \(p=\Phi(u+\ell)-\Phi(u)\). By symmetry it is enough to integrate over \(u\leq-\ell/2\). Put \(s=u+\ell\). Gaussian inverse-Mills monotonicity gives
+\[
+\Phi(s)-\Phi(s-\ell)\geq c_0\Phi(s),
+\]
+while \(|\phi(u)-\phi(u+\ell)|\leq\phi(s)\). Hence the half-integral is at most
+\[
+c_0^{-1}\int_\R\frac{\phi(s)^2}{\Phi(s)}\,ds<\infty.
+\]
+The half-line case is the same final integral. Rescaling restores the factor \(1/\sigma\).
+\end{proof}
+
+Summing (25) in (24) gives \(C(2q+1)/\sigma\). Since \(q\geq1\), this is at most \(3Cq/\sigma\), which proves (8) with a changed universal constant.
+
+\subsection{Fisher--Rao path and testing constants}
+
+\begin{proof}[Proof of Lemma~\ref{lem:path}]
+For a differentiable Bernoulli path with success probability \(p(\theta)\), define
+\[
+s(\theta)=(\sqrt{p(\theta)},\sqrt{1-p(\theta)}).
+\]
+Then \(\|s'(\theta)\|_2^2=J_A(\theta)/4\), and our Hellinger convention gives
+\[
+H^2(P_a^A,P_b^A)=\frac12\|s(a)-s(b)\|_2^2.
+\]
+Cauchy--Schwarz along \([a,b]\) proves (10).
+\end{proof}
+
+For completeness, if \(\rho(P,Q)=\int\sqrt{dP\,dQ}\), then
+\[
+1-\TV(P,Q)\geq\frac12\rho(P,Q)^2.
+\tag{26}
+\]
+Indeed, Cauchy--Schwarz gives \(\TV(P,Q)\leq\sqrt{1-\rho(P,Q)^2}\), and \(1-\sqrt{1-x}\geq x/2\). Thus equal-prior testing error is at least \(\rho^2/4\). For product Bernoulli experiments, \(\rho=\prod_i(1-H_i^2)\). If every \(H_i^2\leq1/2\), then \(\rho\geq\exp(-2\sum_iH_i^2)\).
+
+\subsection{Localization}
+
+Let \(\theta_1,\ldots,\theta_M\) be a \(4\sigma\)-packing of \([-L,L]\), so \(M\geq c(1+L/\sigma)\). Put a uniform prior on the index. An estimator with error at most \(\varepsilon\leq\sigma\) decodes the index with probability at least \(3/4\). Conditional on public randomness, the transcript has at most \(2^n\) values. The public seed is independent of the index, so its mutual information with the full observed transcript is at most \(n\log2\). Fano's inequality yields \(n\geq c\log M\).
+
+\section{The finite random-grid metric}\label{app:metric}
+
+\subsection{Component count and tails}
+
+The number of width-\(h\) cells intersecting \([-B,B]\) is at most \(2B/h+2=q_0/2+2\leq q_0\). Every retained suffix is an interval. Adjacent suffixes are disjoint except on a null event, so the number of components is no larger than the number of cells.
+
+Let \(u,v\in[-L,L]\), let \(d=|u-v|\), and let \(Q:\R\to[0,1]\) be arbitrary. The mean value theorem and Gaussian tails give
+\[
+\left|\int_{[-B,B]^c}Q(x)\bigl[\phi_\sigma(x-u)-\phi_\sigma(x-v)\bigr],dx\right|
+\leq C\frac d\sigma e^{-M^2/2}.
+\tag{27}
+\]
+Taking \(Q\) to be the infinite-grid query shows that (27) bounds the response error caused by truncation. Put \(R=L/\sigma\). Since \(h\leq B\leq C L\), \(d\leq2L\), and \(e^{-M^2}=(2+R)^{-16}\), a check of the three cases in (14) gives
+\[
+\frac{d^2}{\sigma^2}e^{-M^2}\leq C R^{-13}\psi_h(d).
+\]
+The response error can therefore be absorbed in both sides of (14).
+
+When \(q_0<8\), recall that \(h=B\) and \(A=[U,B]\) for \(U\) uniform on \([-B,B]\). With \(r=r_{u,v}\),
+\[
+m_u(A)-m_v(A)=r(B)-r(U).
+\]
+The bound in (27) controls \(r(B)\) and the omitted part of \(\int r^2\). Using \((a-b)^2\geq a^2/2-b^2\) and its matching upper counterpart gives
+\[
+D(u,v)\asymp\frac1B\int_\R r(z)^2\,dz.
+\]
+Equation~(28) therefore gives \(D(u,v)\asymp d^2/(B\sigma)\) for \(d\leq\sigma\) and \(D(u,v)\asymp d/B\) for \(d>\sigma\). Since \(d\leq2L\leq2B\), this is equivalent to (14) with \(h=B\).
+
+\subsection{Convolution identity}
+
+Translation lets us take \([u,v]=[0,d]\). Since \(r=\1_{[0,d]}*\phi_\sigma\), Fubini gives
+\[
+\int_\R r(z)^2\,dz
+=\int_0^d\int_0^d\phi_{\sqrt2\sigma}(x-y)\,dx\,dy
+=\int_{-d}^d(d-|z|)\phi_{\sqrt2\sigma}(z)\,dz.
+\tag{28}
+\]
+If \(d\leq\sigma\), use \(e^{-x}\geq1-x\) in (28) to obtain
+\[
+\int r^2\geq\frac{d^2}{2\sqrt\pi\sigma}\left(1-\frac{d^2}{24\sigma^2}\right)>\frac14\frac{d^2}{\sigma}.
+\]
+The matching upper bound is immediate from the maximum Gaussian density. If \(d>\sigma\), integrating over \(|z|\leq\sigma/2\) gives \(\int r^2\geq c_1d\) for a fixed \(c_1>0\), while \(r\leq1\) and \(\int r=d\) give the upper bound \(d\).
+
+\subsection{Lower bound at local distances}
+
+Ignore the tail cells by (27). Conditional on \(S\),
+\[
+m_u(A)-m_v(A)=
+\sum_j\left[r_{u,v}(S+(j+1)h)-r_{u,v}(U_j)\right].
+\tag{29}
+\]
+The \(U_j\) are independent, so the conditional second moment dominates the sum of their variances. Summing the variance formula gives (16). Since \(r\geq0\) and \(\int r=d\),
+\[
+\sum_j\left(\int_{I_j}r\right)^2
+\leq\left(\sum_j\int_{I_j}r\right)^2=d^2.
+\]
+For \(d\leq\sigma\), the strict constant in the preceding display and \(h\geq4\sigma\) make (16) at least \(c d^2/(h\sigma)\). For \(\sigma<d\leq a_0h\), take the fixed constant \(a_0<c_1/2\). Then (16) is at least \((c_1-a_0)d/h\). This proves both local branches.
+
+\subsection{Lower bound at separated distances}
+
+For any square-integrable \(f\), the variance formula inside one cell and averaging over \(S\sim\operatorname{Unif}[0,h)\) give
+\[
+\E_S\sum_j\operatorname{Var}_{U\sim\operatorname{Unif}(I_j)}f(U)
+=\frac1{2h^3}\iint_{|x-y|<h}(h-|x-y|)(f(x)-f(y))^2\,dx\,dy.
+\tag{29a}
+\]
+Indeed, two fixed points lie in the same randomly shifted cell with probability \((1-|x-y|/h)_+\).
+
+Apply (29a) to \(f=r_{u,v}\), with the fixed \(a_0>0\) from the local calculation. If \(a_0h\leq d\leq h\), then \(t=d/\sigma\geq4a_0\). After translating \(u\) to zero, use
+\[
+R_-=[-3d/8,-d/4],\qquad R_+=[3d/8,d/2].
+\]
+The function \(r\) is increasing to the midpoint \(d/2\), so for \(x\in R_-\) and \(y\in R_+\),
+\[
+r(y)-r(x)\geq r(3d/8)-r(-d/4)=:\Delta(t).
+\]
+Here \(\Delta(t)>0\) for every \(t>0\), by strict Gaussian monotonicity, and \(\Delta(t)\to1\) as \(t\to\infty\). Continuity therefore gives \(\inf_{t\geq4a_0}\Delta(t)>0\). Both intervals have length \(d/8\), and every pair in their Cartesian product has distance at most \(7d/8\). Restricting (29a) to this product gives
+\[
+D(u,v)\geq c\frac{d^2}{h^2}\geq ca_0\frac dh.
+\]
+If \(d\geq h\), use the same two intervals with \(d\) replaced by \(h\). They still lie to the left of the midpoint. Since \(h/\sigma\geq4\) and the second endpoint is at least \(h\) away, Gaussian tail bounds give a universal lower bound on \(r(y)-r(x)\) over their Cartesian product. Equation (29a) then gives \(D(u,v)\geq c\). Together with the local calculation, this proves the lower half of (14).
+
+\subsection{Upper bound by shifted quadrature}
+
+From (29), the conditional variance is at most \(h^{-1}\int r^2\). Its conditional mean equals
+\[
+g(S)=\sum_{j\in\mathbb Z}r(S+jh)-\frac1h\int_\R r.
+\]
+The function \(r\) is smooth and rapidly decaying. Poisson summation is therefore valid. With the Fourier convention \(\widehat f(\omega)=\int f(x)e^{-i\omega x}dx\),
+\[
+g(S)=\frac1h\sum_{k\neq0}\widehat r(2\pi k/h)e^{2\pi i kS/h}.
+\]
+Parseval proves (18). Also
+\[
+\widehat r(\omega)
+=e^{-\sigma^2\omega^2/2}
+\frac{1-e^{-i\omega d}}{i\omega},
+\]
+so
+\[
+|\widehat r(\omega)|\leq
+e^{-\sigma^2\omega^2/2}\min\{d,2/|\omega|\}.
+\tag{30}
+\]
+For \(d\leq\sigma\), summing the first bound in (30) and comparing a Gaussian sum with its integral gives
+\[
+\E_Sg(S)^2\leq
+C\frac{d^2}{h^2}\left(1+\frac h\sigma\right)
+\leq C\frac{d^2}{h\sigma}.
+\]
+For \(\sigma<d\leq h\), split at \(|k|=h/d\). The low frequencies contribute \(Cd/h\), and the \(k^{-2}\) tail contributes the same order. Equation (28) gives identical bounds for the conditional variance. Since \(|m_u-m_v|\leq1\), the upper half of (14) follows.
+
+\section{Excess-loss decoding details}\label{app:decoder}
+
+Let \(f_v(A)=m_v(A)\). Then \(\sqrt{D(u,v)}=\|f_u-f_v\|_{L_2(\cQ)}\), where \(\cQ\) is the random query law. Thus
+\[
+\sqrt{D(v,v_0)}\leq\sqrt{D(u,v)}+\sqrt{D(u,v_0)}.
+\tag{31}
+\]
+For \(Z=\ell_v-\ell_{v_0}\), properness gives
+\[
+\E_u Z=D(u,v)-D(u,v_0).
+\tag{32}
+\]
+Direct expansion and \(|B-f|\leq1\) give
+\[
+|Z|\leq2|f_v-f_{v_0}|,\qquad
+\E_uZ^2\leq4D(v,v_0).
+\tag{33}
+\]
+If \(D(u,v_0)\leq D(u,v)/16\), then (31)--(33) show that the mean in (32) is at least \(15D(u,v)/16\) and the variance proxy is at most \(25D(u,v)/4\). Bernstein gives \(\Prb(\sum_iZ_i\leq0)\leq e^{-cnD(u,v)}\).
+
+For the coarse net, choose spacing \(a h\) with \(a\) small. The upper half of (14) bounds the nearest-point risk by \(Ca\). Candidates at distance at least \(C_1h\) have risk at least a universal constant. Taking \(a\) small and \(C_1\) large establishes the required risk ratio. There are \(O(L/h)\) candidates.
+
+For the fine net, choose spacing \(a\varepsilon\). A candidate whose distance from \(u\) is between \(j\varepsilon\) and \((j+1)\varepsilon\), for \(j\geq1\), has risk at least \(c\psi_h(j\varepsilon)\), while the nearest-point risk is at most \(Ca^2\varepsilon^2/(h\sigma)\). Fixing \(a\) small gives the risk ratio outside the target radius. The shell contains at most \(C/a\) points. Therefore the total fine failure probability is at most
+\[
+C\sum_{1\leq j\leq\sigma/\varepsilon}
+\exp\left(-cn\frac{j^2\varepsilon^2}{h\sigma}\right)
++
+C\sum_{\sigma/\varepsilon<j\leq h/\varepsilon}
+\exp\left(-cn\frac{j\varepsilon}{h}\right)
++
+C\frac h\varepsilon e^{-cn}.
+\tag{34}
+\]
+Under (23), the first two sums are \(O(\delta)\). Since \(\varepsilon\leq\sigma\), \(\log(h/\varepsilon)\leq h/\varepsilon\leq h\sigma/\varepsilon^2\). Also \(\log(1/\delta)\geq\log4\). Increasing the universal constant in (23) therefore makes the final term \(O(\delta)\) as well. This proves the fine guarantee.
+
+\section{Numerical falsification check}\label{app:numerics}
+
+The proof is analytic, but we used direct Monte Carlo and quadrature checks to catch component-count and endpoint-phase mistakes. We tested \(L/\sigma\in\{32,100,300\}\), budgets from \(q=1\) through \(q=L/\sigma\), three mean phases, and distances from \(0.1\sigma\) through \(2h\). Across 451 valid cases, the smallest ratio of numerical \(D(u,v)\) to \(\psi_h(|u-v|)\) was \(0.134962\). Every query obeyed its component budget. The random-grid branch used at most \(0.625q\) components, while the low-budget branch used one. The script and fixed seed are included in the supplementary source.
+
+\end{document}
